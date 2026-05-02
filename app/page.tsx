@@ -1,11 +1,43 @@
 "use client";
 
+import { useState } from "react";
+
 import { CommandInput } from "@/components/CommandInput";
 import { ResultPanel } from "@/components/ResultPanel";
+import type { ParsedCommand, ValidationResult } from "@/types/command";
 
 export default function HomePage() {
-  function handleCommandSubmit(command: string): void {
-    void command;
+  const [isLoading, setIsLoading] = useState(false);
+  const [parsedCommand, setParsedCommand] = useState<ParsedCommand | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  async function handleCommandSubmit(command: string): Promise<void> {
+    setIsLoading(true);
+    setErrors([]);
+    setParsedCommand(null);
+
+    try {
+      const response = await fetch("/api/parse", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ command }),
+      });
+
+      const result = (await response.json()) as ValidationResult;
+
+      if (result.ok) {
+        setParsedCommand(result.command);
+        return;
+      }
+
+      setErrors(result.errors);
+    } catch {
+      setErrors(["Unable to reach parse API"]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -19,8 +51,12 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-6">
-          <CommandInput onSubmit={handleCommandSubmit} />
-          <ResultPanel />
+          <CommandInput isLoading={isLoading} onSubmit={handleCommandSubmit} />
+          <ResultPanel
+            errors={errors}
+            isLoading={isLoading}
+            parsedCommand={parsedCommand}
+          />
         </div>
       </section>
     </main>
