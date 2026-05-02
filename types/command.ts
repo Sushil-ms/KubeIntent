@@ -9,3 +9,13 @@ export type ParsedCommand = {
   target?: string;
   replicas?: number;
 };
+
+export type ValidationResult =
+  | {
+      ok: true;
+      command: ParsedCommand;
+    }
+  | {
+      ok: false;
+      errors: string[];
+    };
