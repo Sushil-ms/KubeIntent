@@ -15,7 +15,7 @@ export function ResultPanel({
     return (
       <section
         aria-label="Result"
-        className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 shadow-sm"
+        className="rounded-xl border border-slate-700 bg-slate-900 p-5 text-sm text-slate-300 shadow-lg"
       >
         Parsing command...
       </section>
@@ -55,9 +55,9 @@ export function ResultPanel({
   return (
     <section
       aria-label="Result"
-      className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 shadow-sm"
+      className="rounded-xl border border-gray-700 bg-gray-900 p-5 text-sm text-gray-300 shadow-lg"
     >
-      Submit a Kubernetes command to see the validated parsed result.
+      Type a Kubernetes command to get started
     </section>
   );
 }

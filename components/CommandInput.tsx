@@ -25,10 +25,10 @@ export function CommandInput({ isLoading, onSubmit }: CommandInputProps) {
   }
 
   return (
-    <form className="flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-4 sm:flex-row" onSubmit={handleSubmit}>
       <input
         aria-label="Kubernetes command"
-        className="min-h-12 flex-1 rounded-lg border border-slate-300 px-4 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+        className="min-h-13 flex-1 rounded-lg border border-gray-600 bg-gray-800 px-4 py-3 text-base text-white shadow-sm outline-none transition duration-200 placeholder:text-gray-400 hover:border-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         disabled={isLoading}
         onChange={(event) => setCommand(event.target.value)}
         placeholder="e.g. scale payment-service to 5 replicas in staging"
@@ -36,11 +36,13 @@ export function CommandInput({ isLoading, onSubmit }: CommandInputProps) {
         value={command}
       />
       <button
-        className="min-h-12 rounded-lg bg-slate-950 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="min-h-13 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition duration-200 hover:bg-blue-500 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:bg-blue-800 disabled:text-blue-100"
         disabled={isLoading}
         type="submit"
       >
-        {isLoading ? "Parsing..." : "Submit"}
+        <span className={isLoading ? "animate-pulse" : ""}>
+          {isLoading ? "Parsing..." : "Submit"}
+        </span>
       </button>
     </form>
   );
