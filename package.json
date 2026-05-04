@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "k8s:setup": "bash scripts/setup-k8s.sh"
   },
   "dependencies": {
     "@kubernetes/client-node": "latest",
