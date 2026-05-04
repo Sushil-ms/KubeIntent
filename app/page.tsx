@@ -7,19 +7,37 @@ import { CommandInput } from "@/components/CommandInput";
 import { ResultPanel } from "@/components/ResultPanel";
 import type { ParsedCommand, ValidationResult } from "@/types/command";
 
-type ApprovalStatus = "idle" | "approved" | "cancelled";
+type PodInfo = {
+  name: string;
+  status: string;
+  createdAt: string;
+};
+
+type ExecuteSuccessResult = {
+  ok: true;
+  data: PodInfo[];
+};
+
+type ExecuteErrorResult = {
+  ok: false;
+  errors: string[];
+};
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [parsedCommand, setParsedCommand] = useState<ParsedCommand | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>("idle");
+  const [executionLoading, setExecutionLoading] = useState(false);
+  const [executionResult, setExecutionResult] = useState<PodInfo[] | null>(null);
+  const [executionErrors, setExecutionErrors] = useState<string[]>([]);
 
   async function handleCommandSubmit(command: string): Promise<void> {
     setIsLoading(true);
     setErrors([]);
     setParsedCommand(null);
-    setApprovalStatus("idle");
+    setExecutionLoading(false);
+    setExecutionResult(null);
+    setExecutionErrors([]);
 
     try {
       const response = await fetch("/api/parse", {
@@ -45,12 +63,46 @@ export default function HomePage() {
     }
   }
 
-  function handleApprovalConfirm(): void {
-    setApprovalStatus("approved");
+  async function handleApprovalConfirm(): Promise<void> {
+    if (!parsedCommand || executionLoading) {
+      return;
+    }
+
+    setExecutionLoading(true);
+    setExecutionErrors([]);
+    setExecutionResult(null);
+
+    try {
+      const response = await fetch("/api/execute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(parsedCommand),
+      });
+
+      const result = (await response.json()) as
+        | ExecuteSuccessResult
+        | ExecuteErrorResult;
+
+      if (result.ok) {
+        setExecutionResult(result.data);
+        return;
+      }
+
+      setExecutionErrors(result.errors);
+    } catch {
+      setExecutionErrors(["Unable to reach execute API"]);
+    } finally {
+      setExecutionLoading(false);
+    }
   }
 
   function handleApprovalCancel(): void {
-    setApprovalStatus("cancelled");
+    setParsedCommand(null);
+    setExecutionLoading(false);
+    setExecutionResult(null);
+    setExecutionErrors([]);
   }
 
   return (
@@ -67,34 +119,23 @@ export default function HomePage() {
 
         <div className="space-y-6">
           <CommandInput isLoading={isLoading} onSubmit={handleCommandSubmit} />
-
           {parsedCommand ? (
             <div className="space-y-3">
               <ApprovalCard
                 command={parsedCommand}
-                isApproved={approvalStatus === "approved"}
-                onCancel={handleApprovalCancel}
                 onConfirm={handleApprovalConfirm}
+                onCancel={handleApprovalCancel}
+                isApproved={executionLoading || executionResult !== null}
               />
-
-              {approvalStatus === "approved" ? (
-                <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                  Action approved. Execution will be added in a later step.
-                </p>
-              ) : null}
-
-              {approvalStatus === "cancelled" ? (
-                <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-                  Action cancelled.
-                </p>
-              ) : null}
             </div>
           ) : null}
-
           <ResultPanel
             errors={errors}
             isLoading={isLoading}
             parsedCommand={parsedCommand}
+            executionErrors={executionErrors}
+            executionLoading={executionLoading}
+            executionResult={executionResult}
           />
         </div>
       </section>
