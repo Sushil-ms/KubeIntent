@@ -13,9 +13,24 @@ type PodInfo = {
   createdAt: string;
 };
 
-type ExecuteSuccessResult = {
+type ExecutionResult =
+  | {
+      kind: "pods";
+      data: PodInfo[];
+    }
+  | {
+      kind: "message";
+      message: string;
+    };
+
+type ExecutePodsSuccessResult = {
   ok: true;
   data: PodInfo[];
+};
+
+type ExecuteMessageSuccessResult = {
+  ok: true;
+  message: string;
 };
 
 type ExecuteErrorResult = {
@@ -28,7 +43,9 @@ export default function HomePage() {
   const [parsedCommand, setParsedCommand] = useState<ParsedCommand | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [executionLoading, setExecutionLoading] = useState(false);
-  const [executionResult, setExecutionResult] = useState<PodInfo[] | null>(null);
+  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(
+    null,
+  );
   const [executionErrors, setExecutionErrors] = useState<string[]>([]);
 
   async function handleCommandSubmit(command: string): Promise<void> {
@@ -82,11 +99,23 @@ export default function HomePage() {
       });
 
       const result = (await response.json()) as
-        | ExecuteSuccessResult
+        | ExecutePodsSuccessResult
+        | ExecuteMessageSuccessResult
         | ExecuteErrorResult;
 
       if (result.ok) {
-        setExecutionResult(result.data);
+        if ("data" in result) {
+          setExecutionResult({
+            kind: "pods",
+            data: result.data,
+          });
+        } else {
+          setExecutionResult({
+            kind: "message",
+            message: result.message,
+          });
+        }
+
         return;
       }
 
