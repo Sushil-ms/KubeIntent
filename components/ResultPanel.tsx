@@ -6,14 +6,50 @@ type PodInfo = {
   createdAt: string;
 };
 
+type ExecutionResult =
+  | {
+      kind: "pods";
+      data: PodInfo[];
+    }
+  | {
+      kind: "message";
+      message: string;
+    };
+
 type ResultPanelProps = {
   isLoading: boolean;
   parsedCommand: ParsedCommand | null;
   errors: string[];
   executionLoading: boolean;
-  executionResult: PodInfo[] | null;
+  executionResult: ExecutionResult | null;
   executionErrors: string[];
 };
+
+function getExecutionLoadingMessage(command: ParsedCommand | null): string {
+  switch (command?.action) {
+    case "scale_deployment":
+      return "Scaling deployment in Kubernetes...";
+    case "restart_deployment":
+      return "Restarting deployment in Kubernetes...";
+    case "get_pods":
+    default:
+      return "Fetching live pod data from Kubernetes...";
+  }
+}
+
+function getSuccessMessage(
+  command: ParsedCommand,
+  fallbackMessage: string,
+): string {
+  switch (command.action) {
+    case "scale_deployment":
+      return `Scaled ${command.target} to ${command.replicas} replicas in ${command.namespace}`;
+    case "restart_deployment":
+      return `Restarted ${command.target} in ${command.namespace}`;
+    default:
+      return fallbackMessage;
+  }
+}
 
 export function ResultPanel({
   isLoading,
@@ -41,7 +77,7 @@ export function ResultPanel({
         className="rounded-lg border border-blue-200 bg-blue-50 p-5 text-sm text-blue-700 shadow-sm"
       >
         <p className="font-medium text-blue-900">Executing command</p>
-        <p className="mt-2">Fetching live pod data from Kubernetes...</p>
+        <p className="mt-2">{getExecutionLoadingMessage(parsedCommand)}</p>
       </section>
     );
   }
@@ -78,14 +114,14 @@ export function ResultPanel({
     );
   }
 
-  if (executionResult) {
+  if (executionResult?.kind === "pods") {
     return (
       <section
         aria-label="Result"
         className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900 shadow-sm"
       >
         <p className="font-medium">Pods in namespace</p>
-        {executionResult.length === 0 ? (
+        {executionResult.data.length === 0 ? (
           <p className="mt-3 text-emerald-800">No pods found.</p>
         ) : (
           <div className="mt-3 overflow-x-auto rounded-md bg-white/90">
@@ -98,7 +134,7 @@ export function ResultPanel({
                 </tr>
               </thead>
               <tbody>
-                {executionResult.map((pod) => (
+                {executionResult.data.map((pod) => (
                   <tr
                     key={`${pod.name}-${pod.createdAt}`}
                     className="border-t border-slate-200"
@@ -112,6 +148,20 @@ export function ResultPanel({
             </table>
           </div>
         )}
+      </section>
+    );
+  }
+
+  if (executionResult?.kind === "message" && parsedCommand) {
+    return (
+      <section
+        aria-label="Result"
+        className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900 shadow-sm"
+      >
+        <p className="font-medium text-emerald-950">Execution completed</p>
+        <p className="mt-2 text-emerald-800">
+          {getSuccessMessage(parsedCommand, executionResult.message)}
+        </p>
       </section>
     );
   }
