@@ -1,10 +1,11 @@
 import type { ParsedCommand } from "@/types/command";
 
-const showOrGetPodsPattern = /^(?:show|get)\s+pods\s+in\s+(dev|staging)$/i;
+const showOrGetPodsPattern =
+  /^(?:show(?:\s+me)?|get)\s+(?:all\s+)?(?:running\s+)?(?:the\s+)?pods\s+in\s+(dev|staging)$/i;
 const scalePattern =
-  /^scale\s+([a-z0-9-]+)\s+to\s+(\d+)\s+replicas\s+in\s+(dev|staging)$/i;
+  /^(?:please\s+)?scale\s+(?:the\s+)?([a-z0-9-]+)(?:\s+deployment|\s+service)?\s+to\s+(\d+)\s+replicas\s+in\s+(dev|staging)$/i;
 const restartPattern =
-  /^restart\s+([a-z0-9-]+)\s+in\s+(dev|staging)$/i;
+  /^(?:please\s+)?restart\s+(?:the\s+)?([a-z0-9-]+)(?:\s+deployment|\s+service)?\s+in\s+(dev|staging)$/i;
 const validNamespaces = ["dev", "staging"] as const;
 
 function isNamespace(value: string): value is ParsedCommand["namespace"] {

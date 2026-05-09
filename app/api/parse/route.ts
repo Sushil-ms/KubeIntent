@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { env } from "@/lib/config/env";
+import { parseCommandWithLLM } from "@/lib/llm/parseCommandWithLLM";
 import { mockParseCommand } from "@/lib/parser/mockParser";
+import { normalizeParsedCommand } from "@/lib/parser/normalizeParsedCommand";
 import { validateCommand } from "@/lib/validators/validateCommand";
 
 type ParseRequestBody = {
@@ -35,7 +38,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsedCommand = mockParseCommand(command);
+  let parsedCommand: unknown;
+
+  if (env.OPENAI_API_KEY) {
+    try {
+      parsedCommand = await parseCommandWithLLM(command);
+    } catch {
+      parsedCommand = mockParseCommand(command);
+    }
+  } else {
+    parsedCommand = mockParseCommand(command);
+  }
+
+  parsedCommand = normalizeParsedCommand(parsedCommand);
 
   if (!parsedCommand) {
     return NextResponse.json(
@@ -48,6 +63,23 @@ export async function POST(request: Request) {
   }
 
   const validationResult = validateCommand(parsedCommand);
+
+  if (
+    !validationResult.ok &&
+    typeof parsedCommand === "object" &&
+    parsedCommand !== null &&
+    "action" in parsedCommand &&
+    parsedCommand.action === "unsupported"
+  ) {
+    return NextResponse.json(
+      {
+        ok: false,
+        errors: ["Unsupported command"],
+      },
+      { status: 400 },
+    );
+  }
+
   const status = validationResult.ok ? 200 : 400;
 
   return NextResponse.json(validationResult, { status });
