@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPods } from "@/lib/k8s/getPods";
 import { restartDeployment } from "@/lib/k8s/restartDeployment";
 import { scaleDeployment } from "@/lib/k8s/scaleDeployment";
+import { checkPolicy } from "@/lib/policy/checkPolicy";
 import type { ParsedCommand } from "@/types/command";
 
 export async function POST(request: Request) {
@@ -21,6 +22,18 @@ export async function POST(request: Request) {
   }
 
   try {
+    const policyResult = checkPolicy(command);
+
+    if (!policyResult.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          errors: policyResult.errors,
+        },
+        { status: 403 },
+      );
+    }
+
     switch (command.action) {
       case "get_pods": {
         const pods = await getPods(command.namespace);
