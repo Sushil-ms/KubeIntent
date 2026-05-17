@@ -1,6 +1,22 @@
 # KubeIntent
 AI Powered DevOps Application
 
+## Environment Setup
+
+Create a local environment file:
+
+```bash
+touch .env.local
+```
+
+Add your OpenAI API key:
+
+```env
+OPENAI_API_KEY=your_api_key_here
+```
+
+When `OPENAI_API_KEY` is present, the parse API uses the OpenAI-backed parser for natural language commands. If the key is missing, or the OpenAI request fails, KubeIntent falls back to the existing mock parser.
+
 ## Local Kubernetes Setup
 
 ### Prerequisites
